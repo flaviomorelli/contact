@@ -1,0 +1,7 @@
+contact_book/
+*.db
+*.txt
+*.pyc
+PKG-INFO
+!*.py
+!*.md
