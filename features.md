@@ -1,7 +1,10 @@
 # Future Features
 
-* Create a script to initialize the data
-* Check if the contact already in the contact book
-* Select which columns to show
-* Create an option to select the clumn by which results are sorted
-* Create edit() command to change and update the contacts
+* Add more help arguments to the comments
+* Add aliases for the flags
+* Each contact can have more than one number
+* Save the birthday instead of the age, and update it automatically 
+* Add tests
+* Possibility to update birthday
+* Use partial matching when using show
+* Implement search command with partial matching

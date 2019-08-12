@@ -95,31 +95,107 @@ def new(name, surname, phone, email, age):
 
 @cli.command()
 @click.option("--all", is_flag=True, help="Show all the columns in the table")
-def show(all):
-    """Show contacts in the database"""
+@click.option("--name", default=None, type=click.STRING)
+@click.option("--surname", default=None, type=click.STRING)
+def show(all, name, surname):
+    """Show contacts in the database. By default, only name and surname are shown"""
+
     columns = "name, surname, phone"
+
     if all:
         columns = "*"
-    cursor = connector.execute(
-        f"""
-        SELECT {columns} FROM contacts
-        ORDER BY surname
-        """
-    )
 
+    # Note that the user is not able to inject {column} in the f-string
+    command = f"SELECT {columns} FROM contacts"
+    arguments = []
+
+    # If any flagged is passed include a where statement
+    if name or surname:
+        command += " WHERE"
+
+    condition = []
+
+    if name:
+        condition.append(" name = ?")
+        name = name.capitalize()
+        arguments.append(name)
+
+    if surname:
+        condition.append(" surname = ?")
+        surname = surname.capitalize()
+        arguments.append(surname)
+
+    # If name and surname are passed join with AND
+    if name and surname:
+        command += " AND".join(condition)
+    elif not condition == []:
+        command += condition[0]
+
+    command = command + " ORDER BY surname"
+
+    cursor = connector.execute(command, tuple(arguments))
+
+    n_contacts = 0
     for row in cursor:
+        n_contacts += 1
         print(Contact(*row))
-        # print(f"{row[1]}, {row[0]}: {row[2]}")
+
+    print(f"\nReturned {n_contacts} contacts\n")
+
+
+@cli.command()
+@click.argument("name", type=click.STRING)
+@click.argument("surname", type=click.STRING)
+@click.option("--phone", default=None, type=click.STRING)
+@click.option("--email", default=None, type=click.STRING)
+def update(name, surname, phone, email):
+    """Update the phone number, or email of a person"""
+
+    name = name.capitalize()
+    surname = surname.capitalize()
+
+    if phone is None and email is None:
+        print("Use the --phone and --email flags to update contact information.")
+        return
+
+    if not contains(name, surname):
+        print("{name} {surname} was not found in the contact book.")
+        return
+
+    command = "UPDATE contacts SET "
+    arguments = []
+
+    if phone:
+        command += "phone = ?,"
+        arguments.append(phone)
+
+    if email:
+        command += "email = ?,"
+        arguments.append(email)
+
+    # Eliminate the extra comma from the command
+    command = command[:-1]
+    command += " WHERE name = ? AND surname = ?"
+
+    arguments += [name, surname]
+    arguments = tuple(arguments)
+
+    result = connector.execute(command, arguments)
+    connector.commit()
+
+    print(f"Number of contacts updated: {result.arraysize}")
 
 
 @cli.command()
 @click.argument("name", type=click.STRING)
 @click.argument("surname", type=click.STRING)
 def delete(name, surname):
+    """Delete a person from the contact book 
+    with a given name and surname"""
     name, surname = name.capitalize(), surname.capitalize()
 
     if not contains(name, surname):
-        print(f"{name} {surname} could not be found.")
+        print("No matching contacts found. No contacts were delted")
         return
 
     result = connector.execute(
@@ -130,20 +206,7 @@ def delete(name, surname):
     )
     connector.commit()
 
-    print(f"{result.arraysize} contacts were deleted")
-
-
-#    result = connector.commit()
-
-# print(f"{list(cur)}")
-
-# print(list(query))
-
-# if list(query) == []:
-# print("There is no such entry")
-
-#    else:
-#       print(f"{name} {surname} was deleted.")
+    print(f"{name} {surname} was deleted from the contact book")
 
 
 def contains(name, surname):
@@ -159,8 +222,3 @@ def contains(name, surname):
         return False
 
     return True
-
-
-# add_contact(connector, "Karl", "Marx", "089123445", "karl.marx@posteo.de", 40)
-# add_contact(connector, "Groucho", "Marx", "8947529835", "groucho.marx@posteo.de")
-# add_contact(connector, "Friedrich", "Engels", "838575729")
