@@ -14,8 +14,8 @@ class Contact:
     name: str
     surname: str
     phone: str
-    email: str
-    age: int
+    email: str = None
+    age: int = None
 
     def __str__(self):
         delim_rep = 20
@@ -33,7 +33,7 @@ class Contact:
         if self.age:
             fields.append(f"Age: {self.age} years")
 
-        fields += ["=" * delim_rep, ""]
+        fields += ["=" * delim_rep]
 
         return "\n".join(fields)
 
@@ -108,32 +108,43 @@ def show(all):
     )
 
     for row in cursor:
-        print(row)
+        print(Contact(*row))
         # print(f"{row[1]}, {row[0]}: {row[2]}")
+
 
 @cli.command()
 @click.argument("name", type=click.STRING)
 @click.argument("surname", type=click.STRING)
 def delete(name, surname):
     name, surname = name.capitalize(), surname.capitalize()
-    cur = connector.cursor()
-    cur.execute("""
+
+    if not contains(name, surname):
+        print(f"{name} {surname} could not be found.")
+        return
+
+    result = connector.execute(
+        """
         DELETE  FROM contacts
         WHERE name=? AND surname=?""",
-        (name, surname)
+        (name, surname),
     )
+    connector.commit()
+
+    print(f"{result.arraysize} contacts were deleted")
+
 
 #    result = connector.commit()
 
-    #print(f"{list(cur)}")
+# print(f"{list(cur)}")
 
-    #print(list(query))
+# print(list(query))
 
-    #if list(query) == []:
-        #print("There is no such entry")
+# if list(query) == []:
+# print("There is no such entry")
 
-#    else: 
- #       print(f"{name} {surname} was deleted.")
+#    else:
+#       print(f"{name} {surname} was deleted.")
+
 
 def contains(name, surname):
     """Check if the entry already exists in the contacts table"""
@@ -148,7 +159,6 @@ def contains(name, surname):
         return False
 
     return True
-
 
 
 # add_contact(connector, "Karl", "Marx", "089123445", "karl.marx@posteo.de", 40)
