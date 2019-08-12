@@ -5,3 +5,5 @@ contact_book/
 PKG-INFO
 !*.py
 !*.md
+.vscode/
+*.workspace
