@@ -6,4 +6,4 @@ PKG-INFO
 !*.py
 !*.md
 .vscode/
-*.workspace
+*.code-workspace
