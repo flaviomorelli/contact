@@ -1,6 +1,7 @@
 import sqlite3
 import click
 from dataclasses import dataclass
+import datetime
 
 # Click uses its own echo function. It's importants only if using ASCII colors
 
@@ -16,6 +17,7 @@ class Contact:
     phone: str
     email: str = None
     age: int = None
+    birthday: str = None
 
     def __str__(self):
         delim_rep = 20
@@ -32,6 +34,15 @@ class Contact:
 
         if self.age:
             fields.append(f"Age: {self.age} years")
+
+        if self.birthday:
+            # The string from SQLite has to be reformatted as a datetime object
+            bday = [
+                int(date_element)
+                for date_element in self.birthday.split()[0].split("-")
+            ]
+            bday = datetime.date(*bday)
+            fields.append(f"Birthday: {bday.day}-{bday.month}-{bday.year}")
 
         fields += ["=" * delim_rep]
 
@@ -59,7 +70,8 @@ def reset():
             SURNAME      TEXT            NOT NULL,
             PHONE        TEXT            NOT NULL,
             EMAIL        TEXT,       
-            AGE          INT
+            AGE          INT,
+            BIRTHDAY     TEXT
             );
             """
         )
@@ -71,10 +83,16 @@ def reset():
 @click.argument("name", type=click.STRING)
 @click.argument("surname", type=click.STRING)
 @click.argument("phone", type=click.STRING)
-@click.option("--email", default=None, type=click.STRING)
-@click.option("--age", default=None, type=click.INT)
-def new(name, surname, phone, email, age):
-    """Create a new entry in the contact book, if it does not already exists"""
+@click.option("-e", "--email", default=None, type=click.STRING)
+@click.option("-a", "--age", default=None, type=click.INT)
+@click.option(
+    "-b",
+    "--birthday",
+    default=None,
+    type=click.DateTime(formats=["%d-%m-%Y"]), 
+    help="dd-mm-yyyy")
+def new(name, surname, phone, email, age, birthday):
+    """Create a new entry in the contact book, if it does not already exist"""
 
     # Interrupt if entry exists
     if contains(name, surname):
@@ -83,20 +101,21 @@ def new(name, surname, phone, email, age):
 
     insert = """
         INSERT INTO contacts
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?)
         """
 
-    contact = (name.capitalize(), surname.capitalize(), phone, email, age)
+    contact = (name.capitalize(), surname.capitalize(), phone, email, age, birthday)
 
     connector.execute(insert, contact)
     connector.commit()
+    # TODO Fix bug! Problem, because birthday is of type datetime
     print(f"You added: {Contact(*contact)} ")
 
 
 @cli.command()
-@click.option("--all", is_flag=True, help="Show all the columns in the table")
-@click.option("--name", default=None, type=click.STRING)
-@click.option("--surname", default=None, type=click.STRING)
+@click.option("-a", "--all", is_flag=True, help="Show all the columns in the table")
+@click.option("-n", "--name", default=None, type=click.STRING)
+@click.option("-s", "--surname", default=None, type=click.STRING)
 def show(all, name, surname):
     """Show contacts in the database. By default, only name and surname are shown"""
 
@@ -146,8 +165,8 @@ def show(all, name, surname):
 @cli.command()
 @click.argument("name", type=click.STRING)
 @click.argument("surname", type=click.STRING)
-@click.option("--phone", default=None, type=click.STRING)
-@click.option("--email", default=None, type=click.STRING)
+@click.option("-p", "--phone", default=None, type=click.STRING)
+@click.option("-e", "--email", default=None, type=click.STRING)
 def update(name, surname, phone, email):
     """Update the phone number, or email of a person"""
 
@@ -198,7 +217,7 @@ def delete(name, surname):
         print("No matching contacts found. No contacts were delted")
         return
 
-    result = connector.execute(
+    connector.execute(
         """
         DELETE  FROM contacts
         WHERE name=? AND surname=?""",

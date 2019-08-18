@@ -2,6 +2,7 @@ import sqlite3
 import click
 import faker
 import random
+import datetime
 
 """This module inizializes the database with fake data"""
 

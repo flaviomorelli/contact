@@ -1,7 +1,6 @@
 # Future Features
 
 * Add more help arguments to the comments
-* Add aliases for the flags
 * Each contact can have more than one number
 * Save the birthday instead of the age, and update it automatically 
 * Add tests
