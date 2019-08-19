@@ -13,15 +13,17 @@ n_contacts = 30
 for _ in range(n_contacts):
     name = fake.first_name()
     surname = fake.last_name()
-    email = f"{name}.{surname}@{fake.free_email_domain()}"
+    email = f"{name.lower()}.{surname.lower()}@{fake.free_email_domain()}"
     phone = fake.msisdn()
-    age = random.randint(15, 70)
+    # birthday has to be cast into a string to mimick what click.DateTime 
+    # does in contact new in the main script
+    birthday = str(fake.date_between(start_date="-80y", end_date="-15y"))
 
     connector.execute(
         """
         INSERT INTO contacts
         VALUES (?, ?, ?, ?, ?)""",
-        (name, surname, phone, email, age),
+        (name, surname, phone, email, birthday),
     )
 
     connector.commit()

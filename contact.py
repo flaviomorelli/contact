@@ -16,7 +16,7 @@ class Contact:
     surname: str
     phone: str
     email: str = None
-    age: int = None
+    # age: int = None
     birthday: str = None
 
     def __str__(self):
@@ -32,17 +32,20 @@ class Contact:
         if self.email:
             fields.append(self.email)
 
-        if self.age:
-            fields.append(f"Age: {self.age} years")
-
         if self.birthday:
             # The string from SQLite has to be reformatted as a datetime object
             bday = [
                 int(date_element)
                 for date_element in self.birthday.split()[0].split("-")
             ]
+
+            print(bday)
+
             bday = datetime.date(*bday)
             fields.append(f"Birthday: {bday.day}-{bday.month}-{bday.year}")
+
+            age = (datetime.date.today() - bday).days // 365
+            fields.append(f"Age: {age}")
 
         fields += ["=" * delim_rep]
 
@@ -70,7 +73,6 @@ def reset():
             SURNAME      TEXT            NOT NULL,
             PHONE        TEXT            NOT NULL,
             EMAIL        TEXT,       
-            AGE          INT,
             BIRTHDAY     TEXT
             );
             """
@@ -84,14 +86,14 @@ def reset():
 @click.argument("surname", type=click.STRING)
 @click.argument("phone", type=click.STRING)
 @click.option("-e", "--email", default=None, type=click.STRING)
-@click.option("-a", "--age", default=None, type=click.INT)
 @click.option(
     "-b",
     "--birthday",
     default=None,
-    type=click.DateTime(formats=["%d-%m-%Y"]), 
-    help="dd-mm-yyyy")
-def new(name, surname, phone, email, age, birthday):
+    type=click.DateTime(formats=["%d-%m-%Y"]),
+    help="dd-mm-yyyy",
+)
+def new(name, surname, phone, email, birthday):
     """Create a new entry in the contact book, if it does not already exist"""
 
     # Interrupt if entry exists
@@ -101,14 +103,17 @@ def new(name, surname, phone, email, age, birthday):
 
     insert = """
         INSERT INTO contacts
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?)
         """
 
-    contact = (name.capitalize(), surname.capitalize(), phone, email, age, birthday)
+    contact = (name.capitalize(), surname.capitalize(), phone, email, birthday)
 
     connector.execute(insert, contact)
     connector.commit()
-    # TODO Fix bug! Problem, because birthday is of type datetime
+
+    # Format birthday as a string for __str__ method of Contact
+    contact = (*contact[:-1], str(birthday))
+
     print(f"You added: {Contact(*contact)} ")
 
 
@@ -167,13 +172,20 @@ def show(all, name, surname):
 @click.argument("surname", type=click.STRING)
 @click.option("-p", "--phone", default=None, type=click.STRING)
 @click.option("-e", "--email", default=None, type=click.STRING)
-def update(name, surname, phone, email):
+@click.option(
+    "-b",
+    "--birthday",
+    default=None,
+    type=click.DateTime(formats=["%d-%m-%Y"]),
+    help="dd-mm-yyyy",
+)
+def update(name, surname, phone, email, birthday):
     """Update the phone number, or email of a person"""
 
     name = name.capitalize()
     surname = surname.capitalize()
 
-    if phone is None and email is None:
+    if phone is None and email is None and birthday is None:
         print("Use the --phone and --email flags to update contact information.")
         return
 
@@ -191,6 +203,10 @@ def update(name, surname, phone, email):
     if email:
         command += "email = ?,"
         arguments.append(email)
+
+    if birthday:
+        command += "birthday = ?,"
+        arguments.append(birthday)
 
     # Eliminate the extra comma from the command
     command = command[:-1]
