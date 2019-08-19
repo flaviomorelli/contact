@@ -4,3 +4,4 @@
 * Add tests
 * Use partial matching when using show
 * Implement search command with partial matching
+* Write documentation on GitHub
