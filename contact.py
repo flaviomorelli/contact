@@ -121,7 +121,10 @@ def new(name, surname, phone, email, birthday):
 @click.option("-a", "--all", is_flag=True, help="Show all the columns in the table")
 @click.option("-n", "--name", default=None, type=click.STRING)
 @click.option("-s", "--surname", default=None, type=click.STRING)
-def show(all, name, surname):
+@click.option(
+    "-f", "--find", is_flag=True, help="Do only partial matching of name or surname"
+)
+def show(all, name, surname, find):
     """Show contacts in the database. By default, only name and surname are shown"""
 
     columns = "name, surname, phone"
@@ -154,6 +157,13 @@ def show(all, name, surname):
         command += " AND".join(condition)
     elif not condition == []:
         command += condition[0]
+
+    # If flag --find is passed to partial matching
+    if find:
+        command = command.replace("=", "LIKE")
+
+        # Add wildcards to the arguments
+        arguments = ["%" + argument + "%" for argument in arguments]
 
     command = command + " ORDER BY surname"
 

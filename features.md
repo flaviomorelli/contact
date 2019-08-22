@@ -2,6 +2,5 @@
 
 * Each contact can have more than one number
 * Add tests
-* Use partial matching when using show
-* Implement search command with partial matching
 * Write documentation on GitHub
+* Transfer reset functionality to initialize module and then import it into contact.py
