@@ -18,7 +18,7 @@ pip install Click
 
 To call `contact` directly from the terminal instead of `python contact.py`, you have to install the package. 
 ```
-pip install --editable
+pip install --editable .
 ```
 Further information on how to set up `click` can be found [here](https://click.palletsprojects.com/en/7.x/setuptools/).
 
