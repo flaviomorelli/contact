@@ -2,6 +2,7 @@ import sqlite3
 import click
 from dataclasses import dataclass
 import datetime
+import initialize
 
 # Click uses its own echo function. It's importants only if using ASCII colors
 
@@ -63,22 +64,7 @@ def reset():
     if click.confirm(
         "Do you want to reset the contact book? All contacts will be lost!"
     ):
-
-        connector.executescript(
-            """
-            DROP TABLE IF EXISTS contacts;
-
-            CREATE TABLE contacts(
-            NAME         TEXT            NOT NULL,
-            SURNAME      TEXT            NOT NULL,
-            PHONE        TEXT            NOT NULL,
-            EMAIL        TEXT,       
-            BIRTHDAY     TEXT
-            );
-            """
-        )
-
-        print("The contact book has been reset")
+        initialize.reset(connector)
 
 
 @cli.command()
