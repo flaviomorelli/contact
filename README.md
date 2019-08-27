@@ -77,19 +77,31 @@ contact show -n mich -a -f
 ```
 
 ### 5. Updating a contact
+To update a contact, you need to type the full name and surname of the person. You can change the phone number with the `--phone`(`-p`) option, the email with the `--email`(`-e`) option, and the birthday with the `--birthday`(`-b`) option. Please note that the birthday is in `dd-mm-yyyy` format. If no options are passed, no changes will be made.
+```
+contact update michael williams -e m.williams@posteo.eu
+```
 
 ### 6. Deleting a contact
-To delete a name from the contact book, you have to type the full name and surname with the `delete`. If you do not remember the exact name or surname, use the show command. 
+To delete a name from the contact book, you have to type the full name and surname. If you do not remember the exact name or surname, use the `show` command. 
 ```
 contact delete michael williams
 ``` 
 
+### 7. Backup of the database
+If you have a Dropbox account, you can backup your database:
+```
+contact backup
+```
+To activate the backup, you have to install the dropbox library in Python, and also to [create an App on Dropbox](https://www.dropbox.com/developers/documentation/python#tutorial). Please call your App `contact_cli`, to make sure it saves the database in the right folder. If there is already a file with the same name in your Dropbox, it will be overwritten by default.
+
+You can create a text file in your CLI-folder (i.e. the folder of contact.py) called `access_token` that includes your private access token to your own Dropbox account. If you do not want to keep it as a text file, it is also possible to pass it as an option with `--token` (`-t`). 
 
 ## License
 
 MIT License
 
-Copyright (c) [year] [fullname]
+Copyright (c) 2019 Flavio Morelli
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

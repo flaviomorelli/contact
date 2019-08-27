@@ -2,7 +2,9 @@ import sqlite3
 import click
 from dataclasses import dataclass
 import datetime
+import dropbox
 import initialize
+
 
 # Click uses its own echo function. It's importants only if using ASCII colors
 
@@ -59,6 +61,24 @@ def cli():
 
 
 @cli.command()
+@click.option("-t", "--token", default=None, type=click.STRING)
+def backup(token):
+    """Create a backup with Dropbox"""
+
+    if token:
+        access_token = token
+    else:
+        with open("access_token") as token:
+            access_token = token.readline()
+
+    dbx = dropbox.Dropbox(access_token)
+    with open("contact_book.db", "rb") as f:
+        dbx.files_upload(
+            f.read(), "/Apps/contact_cli.db", mode=dropbox.files.WriteMode("overwrite")
+        )
+
+
+@cli.command()
 def reset():
     """Reset the database. Caution: all your contact will be lost!"""
     if click.confirm(
@@ -97,8 +117,12 @@ def new(name, surname, phone, email, birthday):
     connector.execute(insert, contact)
     connector.commit()
 
-    # Format birthday as a string for __str__ method of Contact
-    contact = (*contact[:-1], str(birthday))
+    if birthday:
+        # Format birthday as a string for __str__ method of Contact
+        contact = (*contact[:-1], str(birthday))
+    else:
+        # Here birthday is None
+        contact = (*contact[:-1], birthday)
 
     print(f"You added: {Contact(*contact)} ")
 
